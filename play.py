@@ -153,7 +153,7 @@ def last_24_hours_ending(sleeps, end_time):
     return '[%s]' % ",".join(graph_data)
 
 
-def main(skip_copy):
+def main(skip_copy=False):
 
     local = r"~/FirstYear/cache"
 
