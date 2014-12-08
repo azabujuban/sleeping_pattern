@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+	<meta http-equiv="refresh" content="600">
+    <title>Ilya's sleeping pattern</title>
+
+    <!--[if lt IE 9]><script language="javascript" type="text/javascript" src="excanvas.js"></script><![endif]-->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script class="include" type="text/javascript" src="sleeping/static/jqPlot/jquery.jqplot.min.js"></script>
+
+    <script type="text/javascript" src="sleeping/static/jqPlot/plugins/jqplot.dateAxisRenderer.min.js"></script>
+    <script type="text/javascript" src="sleeping/static/jqPlot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+    <script type="text/javascript" src="sleeping/static/jqPlot/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
+    <script type="text/javascript" src="sleeping/static/jqPlot/plugins/jqplot.categoryAxisRenderer.min.js"></script>
+    <script type="text/javascript" src="sleeping/static/jqPlot/plugins/jqplot.barRenderer.min.js"></script>
+
+    <script type="text/javascript" src="sleeping/static/jqPlot/plugins/jqplot.highlighter.min.js"></script>
+    <script type="text/javascript" src="sleeping/static/jqPlot/plugins/jqplot.cursor.min.js"></script>
+    <script type="text/javascript" src="sleeping/static/jqPlot/plugins/jqplot.dateAxisRenderer.min.js"></script>
+
+    <script type="text/javascript" src="sleeping/static/jqPlot/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="sleeping/static/jqPlot/jquery.jqplot.css" />
+
+      <style type="text/css">
+    .button-reset {
+      margin: 10px;
+      margin-left: 30px;
+    }
+
+
+  </style>
+</head>
+<body>
+    <script class="include" type="text/javascript" src="sleeping/static/lines.js"></script>
+
+    <script type="text/javascript">
+
+
+        $(document).ready(function () {
+
+
+            var plot1 =
+$.jqplot('chart1', lines,
+
+
+
+{
+    title: 'Daily sleep progress',
+    seriesDefaults: { showMarker: false, shadow: false, color: '#aaaaaa' },
+
+    series:colors,
+
+	legend: { show:true, location: 'nw' },
+
+    axesDefaults: {
+        labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
+    },
+
+    axes: {
+        yaxis: {
+            label: "Slept so far",
+            renderer: $.jqplot.DateAxisRenderer,
+            tickOptions: { formatString: '%R' },
+            tickInterval: '1 hour'
+        },
+
+        y2axis: {
+            tickOptions:{formatString:'$%d'}
+        },
+
+        xaxis: {
+            label: "By this time", pad: 0,
+            renderer: $.jqplot.DateAxisRenderer,
+            tickOptions: { formatString: '%R' },
+            tickInterval: '1 hour'
+        },
+
+    },
+    highlighter: {
+        tooltipAxes: 'xy',
+        yvalues: 2,
+        show: true,
+        sizeAdjust: 7.5,
+        bringSeriesToFront:false,
+        formatString: '<table class="jqplot-highlighter">\
+        <tr><td>By</td><td>%s</td></tr>\
+        <tr><td>Slept</td><td>%s</td></tr>\
+        	</table>'
+
+    },
+
+cursor:{
+        show:true,
+        zoom:true,
+        showTooltip:true
+      }
+
+}
+);
+
+ $('#reset').click(function() { plot1.resetZoom() });
+ $('#reload').click(function() { location.reload() });
+        });
+
+    </script>
+    <div id="chart1" style="height:550px; width:1000px;"></div>
+    <button class="button-reset" id='reset'>Reset Zoom</button>
+    <button class="button-reset" id='reload'>Refresh</button>
+</body>
+</html>
