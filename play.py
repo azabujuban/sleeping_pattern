@@ -1,20 +1,22 @@
 #!/usr/bin/python3.4
 
-from TlogProcessor import TlogProcessor
+import os
+from os import path
+import time
 from datetime import datetime, timedelta
 from itertools import groupby
 from dropbox_helper import DropboxHelper
 from functools import reduce
-
-from os import path
+from TlogProcessor import TlogProcessor
 
 
 syncRoot = "/Apps/FirstYear/sinkv2/Ilya__40A5E3EB-3FF1-4D9E-81B3-BA156E8BFDD0"
 #syncRoot = "/Apps/FirstYear/sinkv2/Ilya_m4__EEF9E7D4-EAE4-4338-B1DA-D2B187097E7B"
 #syncRoot = "/Apps/FirstYear/sinkv2/Bodes__B77BCBD9-9EAB-4CC1-A83B-4D64414E0F47"
 
-timezone_bug = timedelta(hours=9)
-sleeping_folder = '/home/maxint/sleeping/static/'
+# 9 stands for Tokyo Standard Time
+timezone_bug = timedelta(hours=time.timezone/60/60+9)
+sleeping_folder = '~/sleeping/static/'
 
 def calc_average(days_data, n_last_days):
 
@@ -81,40 +83,93 @@ def day_intervals_to_graph_data(one_day):
     return list(zip(xs, ys))
 
 
-def main():
-
-    # bring the logs locally first
+def copy_data_from_dropbox(local):
     dh = DropboxHelper()
 
     remote = syncRoot
-    local = r"~/FirstYear/cache"
 
     dh.mirror_tlog_files(remote, local)
 
-    # all the sleeping information
+def load_sleeps_data(local):
     all_sleeps = []
-    import os
+
     for root, subFolders, files in os.walk(os.path.expanduser(local)):
         for file in files:
             if file.endswith('.tlog'):
                 all_sleeps.extend(TlogProcessor(path.join(root, file)).get_activity_logs('Sleep'))
 
     # group these by ObjectID, then take the very latest log for each ObjectID
-    group_by_id = lambda s: s['ObjectID']
     sleeps = []
     keys = []
+    group_by_id = lambda s: s['ObjectID']
     for k, g in groupby(sorted(all_sleeps, key=group_by_id), group_by_id):
         sleeps.append(sorted(g, key=lambda _: _['Timestamp'], reverse=True)[0])
         keys.append(k)
 
-    print('raw sleeps: ', len(all_sleeps))
-    print('unique sleeps: ', len(keys))
+    return sleeps, keys
+
+
+def get_sleeps_in_window(sleeps, win_start, win_end):
+
+    s = [(datetime.strptime(_['Time'], '%Y-%m-%d %H:%M:%S'), _['DurationMin']) for _ in sleeps]
+
+    all_in_window = set([_ for _ in s if win_start <= _[0] <= win_end
+                         and not 0 == _[1]
+                         and _[0] + timedelta(minutes = _[1]) <= win_end])
+
+    started_in_window = set([_ for _ in s if win_start <= _[0] <= win_end]) - all_in_window
+    ended_in_window = set([_ for _ in s if 0 != _[1] and win_start <= _[0] + timedelta(minutes = _[1]) <= win_end]) - all_in_window
+
+    assert len(started_in_window) <= 1
+    assert len(ended_in_window) <= 1
+
+    # cut these at the windows start/end - being careful with the ongoing sleep
+    started_in_window = [(_[0], int((win_end - _[0]).total_seconds()/60)) for _ in list(started_in_window)]
+    ended_in_window = [(win_start, int(_[1] - (win_start - _[0]).total_seconds()/60)) for _ in list(ended_in_window)]
+
+    # merge the lists
+    started_in_window.extend(ended_in_window)
+    started_in_window.extend(list(all_in_window))
+
+    return reduce(lambda x, y: x + y, [_[1] for _ in started_in_window])
+
+
+def last_24_hours_ending(sleeps, end_time):
+
+    day_start = end_time - timedelta(hours=end_time.hour, minutes=end_time.minute, seconds=end_time.second)
+    graph_data = []
+
+    for win_end_sec in range(0,int((end_time - day_start).total_seconds()), 60*10):
+    #debug
+    #for win_end_sec in [int((end_time - day_start).total_seconds())]:
+        # find the sleeps in the last 24 hours
+        win_end = day_start + timedelta(seconds=win_end_sec) + timezone_bug
+        win_start = win_end - timedelta(hours=24)
+
+        mins_slept = get_sleeps_in_window(sleeps, win_start, win_end)
+        mins_x = win_end_sec//60
+        graph_data.append("['{0:02}:{1:02}','{2:02}:{3:02}']".format(mins_x//60, mins_x % 60, mins_slept//60, mins_slept % 60))
+
+    return '[%s]' % ",".join(graph_data)
+
+
+def main(skip_copy):
+
+    local = r"~/FirstYear/cache"
+
+    # bring the logs locally first
+    if not skip_copy:
+        copy_data_from_dropbox(local)
+
+    # all the sleeping information
+    (sleeps, keys) = load_sleeps_data(local)
+    print('Loaded %i unique sleeps' % len(keys))
 
     #print(json.dumps(sleeps, sort_keys=True, indent=4, separators=(',', ': ')))
 
     # group by time into days: "Time": "2014-10-29 06:55:38",
     # sleep_intervals_grouped is a list of arrays of sleeping intervals
-    # one array per each day when sleeping started
+    # one array per each day when the sleep started
     daily_intervals = []
     group_by_day = lambda s: s['Time'][:10]
     for k, g in groupby(sorted(sleeps, key=group_by_day), group_by_day):
@@ -174,24 +229,25 @@ def main():
     lines = ''
     colors = ''
 
-    with open('all_lines.js', 'w') as f:
-        for day in daily_intervals:
+    if False:
+        with open(os.path.expanduser(sleeping_folder + 'all_lines.js'), 'w') as f:
+            for day in daily_intervals:
 
-            day_data = day_intervals_to_graph_data(day)
+                day_data = day_intervals_to_graph_data(day)
 
-            f.write('line%i=' % i + str(list(graph_data_to_js(day_data))) + ';\n')
+                f.write('line%i=' % i + str(list(graph_data_to_js(day_data))) + ';\n')
 
-            color = (default_color, 3) if i < len(daily_intervals)-2 else ((today_color, 5) if not i + 2 == len(daily_intervals) else (yesterday_color, 5))
-            colors += "{color: '#%X', lineWidth: %i}, " % color
+                color_width = (default_color - i * 0x010101 * 3, 3) if i < len(daily_intervals)-2 else ((today_color, 5) if not i + 2 == len(daily_intervals) else (yesterday_color, 5))
+                colors += "{color: '#%X', lineWidth: %i}, " % color_width
 
-            lines += 'line%i,' % i
+                lines += 'line%i,' % i
 
-            i += 1
+                i += 1
 
-        f.write('colors=[%s]\n' % colors)
-        f.write('lines=[%s]\n' % lines)
+            f.write('colors=[%s]\n' % colors)
+            f.write('lines=[%s]\n' % lines)
 
-    with open(sleeping_folder + 'lines.js', 'w') as f:
+    with open(os.path.expanduser(sleeping_folder + 'lines.js'), 'w') as f:
 
         days_data = list(map(day_intervals_to_graph_data, daily_intervals))
 
@@ -207,25 +263,28 @@ def main():
         # find the best/words days
         ttl_sleep_time = lambda s: s[len(s)-1][1]
         longest_day = sorted(days_data, key=ttl_sleep_time, reverse=True)[0]
-        f.write('longest_day=' + str(list(graph_data_to_js(longest_day))) + ';\n\n')
+        f.write('longest_day={0};\n'.format(list(graph_data_to_js(longest_day))))
 
+        f.write('prev24={0};\n'.format(last_24_hours_ending(sleeps, datetime.now()-timedelta(hours=24))))
+        f.write('last24={0};\n\n'.format(last_24_hours_ending(sleeps, datetime.now())))
 
         f.write("colors=[\n\
                         {color: '#DDDDDD', lineWidth: 10, label:'Last 4 weeks avg.'},\n\
                         {color: '#DDDDFF', lineWidth: 10, label:'Last week avg.'},\n\
-                        {color: '#000000', lineWidth: 1, label:'Record day'},\n\
+                        {color: '#000000', lineWidth: 2, label:'Record day'},\n\
                         {color: '#66FF44', lineWidth: 5, label:'Day before yesterday'},\n\
                         {color: '#4466FF', lineWidth: 5, label:'Yesterday'},\n\
-                        {color: '#FF4466', lineWidth: 5, label:'Today'}];\n\
-                        \n")
+                        {color: '#4466FF', lineWidth: 2, label:'Prev 24h'},\n\
+                        {color: '#FF4466', lineWidth: 5, label:'Today'},\n\
+                        {color: '#FF4466', lineWidth: 2, label:'Last 24h'},\n\
+                        ];\n")
 
-        f.write('lines=[average_last_4weeks, average_last_week, longest_day, ototoi, yesterday, today];\n')
-
+        f.write('lines=[average_last_4weeks, average_last_week, longest_day, ototoi, yesterday, prev24, today, last24];\n')
 
     import webbrowser
-    webbrowser.open('file:///C:/Dev/Quick/FirstYear/jqPlot.html')
+    webbrowser.open('file:///' + os.path.expanduser(sleeping_folder + 'jqPlot.html'))
 
-main()
+main(False)
 
 #strange_file = r"C:\Users\maxlevy\Dropbox\Apps\FirstYear\sinkv2\Ilya__40A5E3EB-3FF1-4D9E-81B3-BA156E8BFDD0\4F9DA8D8-9B8C-4787-A30D-20A9D99BD4A1__903C2920-0025-4D02-854D-9D152B4B38F7\TransactionLog0.tlog"
 #tl = TlogProcessor(strange_file)

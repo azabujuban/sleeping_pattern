@@ -60,7 +60,7 @@ class TlogProcessor:
         return filename
 
     def load_deleted_activities(self):
-        # such an elemet indicates deletion of an activity:
+        # such an element (OpCode=2) indicates deletion of an activity:
         delete_command = "\
         <dict>\
             <key>$class</key>\
