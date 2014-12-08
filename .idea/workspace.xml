@@ -2,15 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ff4fe899-895a-466a-9b6a-73a2faf56bc0" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/encodings.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/scopes/scope_settings.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/sleeping_pattern.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/TlogProcessor.py" afterPath="$PROJECT_DIR$/TlogProcessor.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/all_lines.js" afterPath="$PROJECT_DIR$/all_lines.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/play.py" afterPath="$PROJECT_DIR$/play.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="sleeping_pattern.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -36,8 +29,8 @@
       <file leaf-file-name="play.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/play.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.7317881" vertical-offset="3791" max-vertical-offset="5049">
-              <caret line="249" column="0" selection-start-line="249" selection-start-column="0" selection-end-line="249" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.47350994" vertical-offset="4287" max-vertical-offset="5066">
+              <caret line="269" column="79" selection-start-line="269" selection-start-column="79" selection-end-line="269" selection-end-column="79" />
               <folding>
                 <element signature="e#22#31#0" expanded="true" />
               </folding>
@@ -392,8 +385,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/play.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.7317881" vertical-offset="3791" max-vertical-offset="5049">
-          <caret line="249" column="0" selection-start-line="249" selection-start-column="0" selection-end-line="249" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.47350994" vertical-offset="4287" max-vertical-offset="5066">
+          <caret line="269" column="79" selection-start-line="269" selection-start-column="79" selection-end-line="269" selection-end-column="79" />
           <folding>
             <element signature="e#22#31#0" expanded="true" />
           </folding>

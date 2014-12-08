@@ -265,8 +265,9 @@ def main(skip_copy):
         longest_day = sorted(days_data, key=ttl_sleep_time, reverse=True)[0]
         f.write('longest_day={0};\n'.format(list(graph_data_to_js(longest_day))))
 
-        f.write('prev24={0};\n'.format(last_24_hours_ending(sleeps, datetime.now()-timedelta(hours=24))))
-        f.write('last24={0};\n\n'.format(last_24_hours_ending(sleeps, datetime.now())))
+        now_fixed = datetime.now() + timezone_bug
+        f.write('prev24={0};\n'.format(last_24_hours_ending(sleeps, now_fixed-timedelta(hours=24))))
+        f.write('last24={0};\n\n'.format(last_24_hours_ending(sleeps, now_fixed)))
 
         f.write("colors=[\n\
                         {color: '#DDDDDD', lineWidth: 10, label:'Last 4 weeks avg.'},\n\
